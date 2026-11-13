@@ -1,3 +1,4 @@
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -14,7 +15,6 @@ st.set_page_config(
 def init_db():
     conn = sqlite3.connect('malom_data.db', check_same_thread=False)
     cursor = conn.cursor()
-    # Alap táblák létrehozása, ha nem léteznek
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS labor (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,16 +79,16 @@ if modul == "Folyamatábra (SCADA)":
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("🔄 Koptatás: " + ("ÜZEMBEN" if st.session_state.koptatas_aktiv else "LEÁLLítVA")):
+        if st.button("🔄 Koptatás: " + ("ÜZEMBEN" if st.session_state.koptatas_aktiv else "LEÁLLÍTVA")):
             st.session_state.koptatas_aktiv = not st.session_state.koptatas_aktiv
     with col2:
         if st.button("⚙️ Őrlő Részleg: " + ("AKTÍV" if st.session_state.orlo_aktiv else "INAKTÍV")):
             st.session_state.orlo_aktiv = not st.session_state.orlo_aktiv
     with col3:
-        if st.button("🛜 Szita Rendszer: " + ("FUT" if st.session_state.szita_aktiv else "LEÁLLítVA")):
+        if st.button("🛜 Szita Rendszer: " + ("FUT" if st.session_state.szita_aktiv else "LEÁLLÍTVA")):
             st.session_state.szita_aktiv = not st.session_state.szita_aktiv
     with col4:
-        if st.button("💨 Pneumatika: " + ("NYOMÁSON" if st.session_state.pneumatika_aktiv else "KIKAPCSolva")):
+        if st.button("💨 Pneumatika: " + ("NYOMÁSON" if st.session_state.pneumatika_aktiv else "KIKAPCSOLVA")):
             st.session_state.pneumatika_aktiv = not st.session_state.pneumatika_aktiv
 
     st.markdown("---")
@@ -101,9 +101,8 @@ if modul == "Folyamatábra (SCADA)":
     with col_v2:
         teljesitmeny = st.number_input("Koptató teljesítmény (t/h)", value=2.5, step=0.1)
         if cel_nedv > alap_nedv:
-        # Vízmennyiség számítás liter/óra = t/h * 1000 * (cél - alap) / (100 - cél)
             viz_igeny = (teljesitmeny * 1000 * (cel_nedv - alap_nedv)) / (100 - cel_nedv)
-            st.success(Szükséges vízpermet: **{viz_igeny:.2f} liter/óra**.)
+            st.success(f"Szükséges vízpermet: **{viz_igeny:.2f} liter/óra**.")
         else:
             st.warning("A cél nedvességnek magasabbnak kell lennie az alapnedvességnél.")
 
@@ -111,11 +110,9 @@ if modul == "Folyamatábra (SCADA)":
 elif modul == "Készletkezelés & Silók":
     st.title("📦 Készletkezelés és Silóállapotok")
     
-    # Adatok lekérdezése adatbázisból
     df_keszlet = pd.read_sql("SELECT * FROM keszlet", conn)
     
     if df_keszlet.empty:
-        # Alapértelmezett adatok feltöltése, ha üres
         alap_termekek = [
             ("Graham liszt", 1250, "Prémium"),
             ("Asztali dara", 840, "Standard"),
@@ -145,7 +142,6 @@ elif modul == "Készletkezelés & Silók":
 elif modul == "Labor & Minőségi Bizonyítvány":
     st.title("🧪 Laboratóriumi Eredmények & Minőségi Bizonyítvány")
     
-    # Dátum szerinti keresés / szűrés
     st.subheader("Múltbeli laboreredmények keresése")
     d_tol, d_ig = st.columns(2)
     with d_tol:
@@ -158,7 +154,6 @@ elif modul == "Labor & Minőségi Bizonyítvány":
     if not df_labor.empty:
         st.dataframe(df_labor, use_container_width=True)
     else:
-        # Ha nincs szűrt adat, mutassuk az összeset
         df_labor_all = pd.read_sql("SELECT * FROM labor", conn)
         if not df_labor_all.empty:
             st.dataframe(df_labor_all, use_container_width=True)
@@ -194,7 +189,6 @@ elif modul == "Labor & Minőségi Bizonyítvány":
             st.success("Laboreredmény sikeresen elmentve!")
             st.rerun()
 
-    # Nyomtatási kép / Bizonyítvány generálás
     st.markdown("### 🖨️ Minőségi Bizonyítvány / Nyomtatási Kép")
     biz_termek = st.selectbox("Válassz terméket a bizonylathoz:", ["BL-55 Rétesliszt", "BL-80 Kenyérliszt", "Graham liszt", "Asztali dara", "Teljes kiőrlésű tönköly"])
     if st.button("Nyomtatási kép generálása (PDF / Előnézet)"):
@@ -220,7 +214,7 @@ elif modul == "Labor & Minőségi Bizonyítvány":
         st.info("Nyomtatáshoz használd a böngésződ nyomtatás funkcióját (Ctrl+P / Command+P).")
 
 # --- 4. BESZÁLLÍTÁSI NAPLÓ ---
-elif modul == "Beszerzés / Beszállítási Napló":
+elif modul == "Beszállítási Napló":
     st.title("🚛 Beszállítási Napló & Nyersanyagkövetés")
     
     st.subheader("Beszállítások szűrése dátum szerint")
