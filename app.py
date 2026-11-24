@@ -1,3 +1,4 @@
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -11,7 +12,7 @@ st.set_page_config(
 )
 
 TERMEKEK_LISTA = [
-    "BFF-55 Rétesliszt",
+    "BL-55 Rétesliszt",
     "BL-80 Kenyérliszt",
     "Graham liszt",
     "Asztali dara",
@@ -26,7 +27,7 @@ TERMEKEK_LISTA = [
 
 
 def ertekeld_minoseget(nedv, siker, feherje, zeleny, w_ertek):
-    """Egyszerű szakmai laborminősítés összegző."""
+    """Szakmai laborminősítés összegző."""
     megjegyzesek = []
     hibak = 0
 
@@ -52,6 +53,60 @@ def ertekeld_minoseget(nedv, siker, feherje, zeleny, w_ertek):
         return "FELTÉTELES / ELTÉRÉSSEL", "; ".join(megjegyzesek)
     else:
         return "NEM MEGFELELŐ", "; ".join(megjegyzesek)
+
+
+def render_nyomtatasi_kep(cim_alcim, termek, minta, lot, datum, nedv, siker, feherje, zeleny, w_ertek, minosites, indoklas, key_prefix):
+    """Nyomtatható minősítési jegyzőkönyv / nyomtatási kép."""
+    if st.button("🖨️ Nyomtatási kép megjelenítése", key=f"print_btn_{key_prefix}"):
+        st.markdown(f"""
+        <div style="border: 2px solid #222; padding: 22px; background-color: #ffffff; color: #000000; border-radius: 8px; max-width: 780px; margin: 10px 0;">
+            <h2 style="text-align: center; margin: 0 0 4px 0; color: #000000;">TÁPIÓGYÖRGYE KIRÁLY MALOM</h2>
+            <h4 style="text-align: center; margin: 0 0 12px 0; color: #000000;">{cim_alcim}</h4>
+            <hr style="border: 1px solid #222;">
+            <p style="margin: 4px 0; color: #000000;"><b>Termék / Gabona:</b> {termek} &nbsp;|&nbsp; <b>Minta / Partner:</b> {minta} &nbsp;|&nbsp; <b>Tétel/LOT:</b> {lot}</p>
+            <p style="margin: 4px 0 12px 0; color: #000000;"><b>Dátum:</b> {datum} &nbsp;|&nbsp; <b>Nyomtatva:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+            <table border="1" style="width:100%; border-collapse: collapse; text-align: center; color: #000000; background-color: #ffffff;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="padding: 8px;">Vizsgált paraméter</th>
+                        <th style="padding: 8px;">Mért érték</th>
+                        <th style="padding: 8px;">Tájékoztató elvárás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 7px;"><b>Nedvesség</b></td>
+                        <td style="padding: 7px;">{nedv:.2f} %</td>
+                        <td style="padding: 7px;">max. 15,0 %</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 7px;"><b>Sikér</b></td>
+                        <td style="padding: 7px;">{siker:.1f} %</td>
+                        <td style="padding: 7px;">min. 26,0–27,0 %</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 7px;"><b>Fehérje</b></td>
+                        <td style="padding: 7px;">{feherje:.2f} %</td>
+                        <td style="padding: 7px;">min. 10,5–12,0 %</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 7px;"><b>Zeleny index</b></td>
+                        <td style="padding: 7px;">{zeleny:.1f} ml</td>
+                        <td style="padding: 7px;">min. 25,0–30,0 ml</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 7px;"><b>W érték</b></td>
+                        <td style="padding: 7px;">{w_ertek:.0f}</td>
+                        <td style="padding: 7px;">min. 160–220</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin: 14px 0 6px 0; color: #000000;"><b>Laborminősítés:</b> <u>{minosites}</u> — {indoklas}</p>
+            <br>
+            <p style="text-align: right; margin: 16px 0 0 0; color: #000000;">______________________________<br>Laboratórium / Minőségellenőr</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.caption("Nyomtatáshoz vagy PDF-be mentéshez használd a böngésző nyomtatás funkcióját (**Ctrl + P** / **Command + P**).")
 
 
 # Adatbázis kapcsolat létrehozása / ellenőrzése és migráció
@@ -235,7 +290,7 @@ elif modul == "Készletkezelés & Silók":
             TERMEKEK_LISTA + [
                 "Graham liszt",
                 "Asztali dara",
-                "Rétesliszt (BL55)",
+                "Rétesliszt (BFF55)",
                 "Étkezési korpa",
                 "BL-80 kenyérliszt",
                 "Egyedi..."
@@ -352,7 +407,6 @@ elif modul == "Labor & Minőségi Bizonyítvány":
             st.success("Laboreredmény sikeresen elmentve!")
             st.rerun()
 
-    # --- LABORMİNŐSÍTÉS ÉS NYOMTATHATÓ NYOMTATÁSI KÉP ---
     st.markdown("---")
     st.subheader("🏅 Laborminősítés & Nyomtatható Nyomtatási Kép")
 
@@ -394,58 +448,14 @@ elif modul == "Labor & Minőségi Bizonyítvány":
 
     st.info(f"**Laborminősítés:** {minosites_eredmeny} — {minosites_indoklas}")
 
-    if st.button("🖨️ Nyomtatási kép megjelenítése (Laborminősítés)"):
-        st.markdown(f"""
-        <div id="nyomtatasi-kep" style="border: 2px solid #222; padding: 22px; background-color: #ffffff; color: #000000; border-radius: 8px; max-width: 780px; margin: 10px 0;">
-            <h2 style="text-align: center; margin: 0 0 4px 0; color: #000000;">TÁPIÓGYÖRGYE KIRÁLY MALOM</h2>
-            <h4 style="text-align: center; margin: 0 0 12px 0; color: #000000;">LABORMİNŐSÍTÉSI JEGYZŐKÖNYV / NYOMTATÁSI KÉP</h4>
-            <hr style="border: 1px solid #222;">
-            <p style="margin: 4px 0; color: #000000;"><b>Termék:</b> {m_termek} &nbsp;|&nbsp; <b>Mintakód:</b> {m_minta} &nbsp;|&nbsp; <b>Tétel/LOT:</b> {m_lot}</p>
-            <p style="margin: 4px 0 12px 0; color: #000000;"><b>Vizsgálat dátuma:</b> {m_datum} &nbsp;|&nbsp; <b>Nyomtatva:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
-            <table border="1" style="width:100%; border-collapse: collapse; text-align: center; color: #000000; background-color: #ffffff;">
-                <thead>
-                    <tr style="background-color: #f0f0f0;">
-                        <th style="padding: 8px;">Vizsgált paraméter</th>
-                        <th style="padding: 8px;">Mért érték</th>
-                        <th style="padding: 8px;">Tájékoztató elvárás</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 7px;"><b>Nedvesség</b></td>
-                        <td style="padding: 7px;">{m_nedv:.2f} %</td>
-                        <td style="padding: 7px;">max. 15,0 %</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 7px;"><b>Sikér</b></td>
-                        <td style="padding: 7px;">{m_siker:.1f} %</td>
-                        <td style="padding: 7px;">min. 26,0–27,0 %</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 7px;"><b>Fehérje</b></td>
-                        <td style="padding: 7px;">{m_feherje:.2f} %</td>
-                        <td style="padding: 7px;">min. 10,5–12,0 %</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 7px;"><b>Zeleny index</b></td>
-                        <td style="padding: 7px;">{m_zeleny:.1f} ml</td>
-                        <td style="padding: 7px;">min. 25,0–30,0 ml</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 7px;"><b>W érték</b></td>
-                        <td style="padding: 7px;">{m_w:.0f}</td>
-                        <td style="padding: 7px;">min. 160–220</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p style="margin: 14px 0 6px 0; color: #000000;"><b>Minősítés:</b> <u>{minosites_eredmeny}</u> — {minosites_indoklas}</p>
-            <br>
-            <p style="text-align: right; margin: 16px 0 0 0; color: #000000;">______________________________<br>Laboratórium / Minőségellenőr</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.caption("Nyomtatáshoz vagy PDF-be mentéshez nyomd meg a **Ctrl + P** (illetve telefonon a böngésző menüjében a **Megosztás / Nyomtatás**) gombot.")
+    render_nyomtatasi_kep(
+        "LABORMİNŐSÍTÉSI JEGYZŐKÖNYV / NYOMTATÁSI KÉP",
+        m_termek, m_minta, m_lot, m_datum,
+        m_nedv, m_siker, m_feherje, m_zeleny, m_w,
+        minosites_eredmeny, minosites_indoklas,
+        key_prefix="labor_oldal"
+    )
 
-    # --- NYOMTATHATÓ CÍMKE A LABORZACSKÓKRA ---
     st.markdown("---")
     st.subheader("🏷️ Nyomtatható Címke a Laborzacskókra")
     c_col1, c_col2 = st.columns(2)
@@ -556,6 +566,37 @@ elif modul == "Beszállítási Napló":
             conn.commit()
             st.success("Beszállítás sikeresen rögzítve az adatbázisba!")
             st.rerun()
+
+    # --- KÖZVETLEN LABORATÓRIUMI MINŐSÍTÉS A BESZÁLLÍTÁSI NAPLÓ OLDALON ---
+    st.markdown("---")
+    st.subheader("🏅 Laboratóriumi Minősítés & Nyomtatható Kép")
+
+    bn_c1, bn_c2, bn_c3, bn_c4, bn_c5 = st.columns(5)
+    with bn_c1:
+        bn_nedv = st.number_input("Nedvesség (%)", value=13.2, step=0.1, key="bn_nedv")
+    with bn_c2:
+        bn_siker = st.number_input("Sikér (%)", value=28.5, step=0.1, key="bn_siker")
+    with bn_c3:
+        bn_feherje = st.number_input("Fehérje (%)", value=12.2, step=0.1, key="bn_feherje")
+    with bn_c4:
+        bn_zeleny = st.number_input("Zeleny index (ml)", value=45.0, step=1.0, key="bn_zeleny")
+    with bn_c5:
+        bn_w = st.number_input("W érték", value=220.0, step=5.0, key="bn_w")
+
+    bn_minosites, bn_indoklas = ertekeld_minoseget(bn_nedv, bn_siker, bn_feherje, bn_zeleny, bn_w)
+    st.info(f"**Minősítés:** {bn_minosites} — {bn_indoklas}")
+
+    bn_minta = st.text_input("Minta / Partner azonosító a nyomtatáshoz", value="BESZÁLLÍTÁS-MINTA", key="bn_minta")
+    render_nyomtatasi_kep(
+        "BESZÁLLÍTÁSI LABORMİNŐSÍTÉS / NYOMTATÁSI KÉP",
+        "Gabona / Búza",
+        bn_minta,
+        "-",
+        datetime.today().strftime("%Y-%m-%d"),
+        bn_nedv, bn_siker, bn_feherje, bn_zeleny, bn_w,
+        bn_minosites, bn_indoklas,
+        key_prefix="beszallitas_oldal"
+    )
 
 # --- 5. HACCP & MUNKAMENET ---
 elif modul == "HACCP & Munkamenet":
