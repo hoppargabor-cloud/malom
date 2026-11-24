@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 TERMEKEK_LISTA = [
-    "BL-55 Rétesliszt",
+    "BFF-55 Rétesliszt",
     "BL-80 Kenyérliszt",
     "Graham liszt",
     "Asztali dara",
@@ -218,6 +218,17 @@ elif modul == "Készletkezelés & Silók":
 
     st.dataframe(df_keszlet, use_container_width=True)
 
+    if not df_keszlet.empty:
+        with st.expander("🗑️ Készlet tétel törlése"):
+            k_torol_opciok = [f"#{r['id']} | {r['termek']} ({r['mennyiseg_kg']} kg)" for _, r in df_keszlet.iterrows()]
+            k_torol_val = st.selectbox("Törlendő készlet sor:", k_torol_opciok, key="k_torol_sel")
+            k_torol_id = int(k_torol_val.split("|")[0].replace("#", "").strip())
+            if st.button("Kiválasztott készlet sor törlése", key="k_torol_btn"):
+                conn.execute("DELETE FROM keszlet WHERE id = ?", (k_torol_id,))
+                conn.commit()
+                st.success("Készlet tétel törölve!")
+                st.rerun()
+
     st.subheader("Új készlet tétel rögzítése / módosítása")
     with st.form("keszlet_form"):
         valaszthato_nevek = sorted(list(set(
@@ -278,6 +289,21 @@ elif modul == "Labor & Minőségi Bizonyítvány":
             st.dataframe(df_labor_all, use_container_width=True)
         else:
             st.info("Még nincsenek rögzített laboreredmények.")
+
+    df_osszes_labor_torleshez = pd.read_sql("SELECT * FROM labor ORDER BY id DESC", conn)
+    if not df_osszes_labor_torleshez.empty:
+        with st.expander("🗑️ Laboreredmény törlése"):
+            l_torol_opciok = [
+                f"#{r['id']} | {r['datum']} | {r['termek']} | Minta: {r.get('mintakod') or '-'}"
+                for _, r in df_osszes_labor_torleshez.iterrows()
+            ]
+            l_torol_val = st.selectbox("Törlendő laborvizsgálat:", l_torol_opciok, key="l_torol_sel")
+            l_torol_id = int(l_torol_val.split("|")[0].replace("#", "").strip())
+            if st.button("Kiválasztott laborvizsgálat törlése", key="l_torol_btn"):
+                conn.execute("DELETE FROM labor WHERE id = ?", (l_torol_id,))
+                conn.commit()
+                st.success("Laborvizsgálat törölve!")
+                st.rerun()
 
     st.markdown("---")
     st.subheader("Új laborvizsgálat rögzítése és Tanúsítvány kiállítása")
@@ -497,6 +523,21 @@ elif modul == "Beszállítási Napló":
             st.dataframe(df_besz_all, use_container_width=True)
         else:
             st.info("Nincsenek rögzített beszállítások ebben az időszakban.")
+
+    df_osszes_besz_torleshez = pd.read_sql("SELECT * FROM beszallitas ORDER BY id DESC", conn)
+    if not df_osszes_besz_torleshez.empty:
+        with st.expander("🗑️ Beszállítás tétel törlése"):
+            b_torol_opciok = [
+                f"#{r['id']} | {r['datum']} | {r['termek']} | {r['mennyiseg_t']} t ({r.get('partner') or '-'})"
+                for _, r in df_osszes_besz_torleshez.iterrows()
+            ]
+            b_torol_val = st.selectbox("Törlendő beszállítás:", b_torol_opciok, key="b_torol_sel")
+            b_torol_id = int(b_torol_val.split("|")[0].replace("#", "").strip())
+            if st.button("Kiválasztott beszállítás törlése", key="b_torol_btn"):
+                conn.execute("DELETE FROM beszallitas WHERE id = ?", (b_torol_id,))
+                conn.commit()
+                st.success("Beszállítás törölve!")
+                st.rerun()
 
     st.subheader("Új gabona beszállítás rögzítése")
     with st.form("besz_form"):
