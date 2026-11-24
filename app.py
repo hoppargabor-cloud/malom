@@ -199,7 +199,7 @@ elif modul == "Készletkezelés & Silók":
         alap_termekek = [
             ("Graham liszt", 1250.0, "Prémium", most_str),
             ("Asztali dara", 840.0, "Standard", most_str),
-            ("Rétesliszt (BL55)", 3100.0, "I. Osztály", most_str),
+            ("Rétesliszt (BFF55)", 3100.0, "I. Osztály", most_str),
             ("Étkezési korpa", 950.0, "Takarmány/Élelmi", most_str),
             ("BL-80 kenyérliszt", 5400.0, "I. Osztály", most_str),
             ("Salvatore reale", 0.0, "Különleges", most_str),
