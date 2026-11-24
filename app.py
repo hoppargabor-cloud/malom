@@ -1,4 +1,3 @@
-
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -80,7 +79,6 @@ def init_db():
         )
     ''')
 
-    # Meglévő labor tábla oszlopainak ellenőrzése és pótlása
     cursor.execute("PRAGMA table_info(labor)")
     labor_oszlopok = [row[1] for row in cursor.fetchall()]
 
@@ -99,7 +97,6 @@ def init_db():
         if oszlop not in labor_oszlopok:
             cursor.execute(f"ALTER TABLE labor ADD COLUMN {oszlop} {tipus}")
 
-    # Ha régi 'gluten' vagy 'terules' oszlop volt benne, átemeljük, ha üres
     cursor.execute("PRAGMA table_info(labor)")
     labor_oszlopok = [row[1] for row in cursor.fetchall()]
     if "gluten" in labor_oszlopok and "siker" in labor_oszlopok:
@@ -449,14 +446,14 @@ elif modul == "Labor & Minőségi Bizonyítvány":
 
 # --- 4. BESZÁLLÍTÁSI NAPLÓ ---
 elif modul == "Beszállítási Napló":
-    st.title("🚛 Beszállítási Napló & Nyersanyagkövetés")[cite: 6]
+    st.title("🚛 Beszállítási Napló & Nyersanyagkövetés")
 
-    st.subheader("Beszállítások szűrése dátum szerint")[cite: 6]
+    st.subheader("Beszállítások szűrése dátum szerint")
     b_tol, b_ig = st.columns(2)
     with b_tol:
-        b_datum_tol = st.date_input("Beszállítás tól", value=datetime.today().replace(day=1), key="b_t")[cite: 6]
+        b_datum_tol = st.date_input("Beszállítás tól", value=datetime.today().replace(day=1), key="b_t")
     with b_ig:
-        b_datum_ig = st.date_input("Beszállítás ig", value=datetime.today(), key="b_i")[cite: 6]
+        b_datum_ig = st.date_input("Beszállítás ig", value=datetime.today(), key="b_i")
 
     df_besz = pd.read_sql(
         "SELECT * FROM beszallitas WHERE datum BETWEEN ? AND ? ORDER BY id DESC",
@@ -464,7 +461,7 @@ elif modul == "Beszállítási Napló":
         params=(str(b_datum_tol), str(b_datum_ig))
     )
 
-    st.markdown("### 🌾 Búza összegzés")[cite: 6]
+    st.markdown("### 🌾 Búza összegzés")
     df_buza_all = pd.read_sql(
         "SELECT * FROM beszallitas WHERE lower(termek) LIKE '%búza%' OR lower(termek) LIKE '%buza%'",
         conn
@@ -489,7 +486,7 @@ elif modul == "Beszállítási Napló":
         )
         st.dataframe(buza_bontas, use_container_width=True)
     else:
-        st.info("Még nincs rögzített búza beszállítás az összegzéshez.")[cite: 6]
+        st.info("Még nincs rögzített búza beszállítás az összegzéshez.")
 
     st.markdown("---")
     if not df_besz.empty:
@@ -499,11 +496,11 @@ elif modul == "Beszállítási Napló":
         if not df_besz_all.empty:
             st.dataframe(df_besz_all, use_container_width=True)
         else:
-            st.info("Nincsenek rögzített beszállítások ebben az időszakban.")[cite: 6]
+            st.info("Nincsenek rögzített beszállítások ebben az időszakban.")
 
-    st.subheader("Új gabona beszállítás rögzítése")[cite: 6]
+    st.subheader("Új gabona beszállítás rögzítése")
     with st.form("besz_form"):
-        b_datum = st.date_input("Brakoló / Érkezési dátum")[cite: 6]
+        b_datum = st.date_input("Brakoló / Érkezési dátum")
         b_partner = st.text_input("Termelő / Beszállító neve")
         b_termek = st.selectbox("Gabona fajtája", ["Búza (Étkezési)", "Takarmánybúza", "Tönkölybúza", "Rozs"])
         b_mennyiseg = st.number_input("Mennyiség (tonna)", value=24.0)
